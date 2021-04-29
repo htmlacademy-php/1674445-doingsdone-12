@@ -32,3 +32,10 @@ CREATE TABLE `users` (
 );
 
 CREATE FULLTEXT INDEX tasks_ft_search ON tasks(name);
+
+SELECT u.id as user_id, u.email, u.name, t.name, t.user_id, t.expire_date, t.id as task_id
+FROM users u
+         JOIN tasks t
+              ON u.id = t.user_id
+WHERE t.status = 0
+  AND expire_date = CURRENT_DATE();

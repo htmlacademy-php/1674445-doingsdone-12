@@ -1,0 +1,13 @@
+{
+    "name": "oleg/doingsdone",
+    "type": "project",
+    "require": {
+        "swiftmailer/swiftmailer": "^6.2"
+    },
+    "authors": [
+        {
+            "name": "Oleg Tishkin",
+            "email": "umkasanki@gmail.com"
+        }
+    ]
+}
