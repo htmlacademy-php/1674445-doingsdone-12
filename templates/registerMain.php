@@ -1,5 +1,5 @@
 <div class="content">
-    <?php print($asideContent); ?>
+    <?php print($aside_content); ?>
 
     <main class="content__main">
         <h2 class="content__main-heading">Регистрация аккаунта</h2>
@@ -10,7 +10,7 @@
 
                 <input class="form__input <?php if($errors['email']) {
                     print('form__input--error');
-                } ?>" type="text" name="email" id="email" value="<?php print(getPostVal('email')); ?>" placeholder="Введите e-mail">
+                } ?>" type="text" name="email" id="email" value="<?=htmlspecialchars(get_post_val('email')); ?>" placeholder="Введите e-mail">
                 <p class="form__message"><?php print($errors['email'] ?? ''); ?></p>
             </div>
 
@@ -19,7 +19,7 @@
 
                 <input class="form__input <?php if($errors['password']) {
                     print('form__input--error');
-                } ?>" type="password" name="password" id="password" value="<?php print(getPostVal('password')); ?>" placeholder="Введите пароль">
+                } ?>" type="password" name="password" id="password" value="<?php print(get_post_val('password')); ?>" placeholder="Введите пароль">
                 <p class="form__message"><?php print($errors['password'] ?? ''); ?></p>
             </div>
 
@@ -28,7 +28,7 @@
 
                 <input class="form__input <?php if($errors['name']) {
                     print('form__input--error');
-                } ?>" type="text" name="name" id="name" value="<?php print(getPostVal('name')); ?>" placeholder="Введите имя">
+                } ?>" type="text" name="name" id="name" value="<?php print(get_post_val('name')); ?>" placeholder="Введите имя">
                 <p class="form__message"><?php print($errors['name'] ?? ''); ?></p>
             </div>
 

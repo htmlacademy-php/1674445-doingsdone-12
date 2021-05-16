@@ -2,19 +2,14 @@
 session_start();
 
 require ('helpers.php');
-$pageTitle = 'Регистрация';
+$page_title = 'Регистрация';
 
 //get data
-$conn = mysqli_connect('127.0.0.1', 'mysql', 'mysql', 'doit');
-if ($conn === false) {
-    print('DB connection error' . mysqli_connect_error());
-    exit();
-}
+$conn = db_connect('doingsdone');
 
-mysqli_set_charset($conn, 'utf8');
-$getUsersQr = "SELECT * FROM `users`";
-$getUsersQrRes = mysqli_query($conn, $getUsersQr);
-$usersList = mysqli_fetch_all($getUsersQrRes, MYSQLI_ASSOC);
+$get_users_query = "SELECT * FROM `users`";
+$get_users_query_result = mysqli_query($conn, $get_users_query);
+$usersList = mysqli_fetch_all($get_users_query_result, MYSQLI_ASSOC);
 
 // validation
 $errors = [];
@@ -56,21 +51,20 @@ foreach ($_POST as $key => $value) {
     }
 }
 
-
 $errors = array_filter($errors);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($errors) === 0) {
-    $email = getPostVal('email');
-    $name = getPostVal('name');
-    $passwordHash = password_hash(getPostVal('password'), PASSWORD_DEFAULT);
+    $email = get_post_val('email');
+    $name = get_post_val('name');
+    $password_hash = password_hash(get_post_val('password'), PASSWORD_DEFAULT);
 
-    $addUserQr = "INSERT INTO `users` (email, name, password)
+    $add_user_query = "INSERT INTO `users` (email, name, password)
                   VALUES (?, ?, ?)";
-    $stmp = mysqli_prepare($conn, $addUserQr);
-    mysqli_stmt_bind_param($stmp, 'sss',$email, $name, $passwordHash);
-    $addUserQrRes = mysqli_stmt_execute($stmp);
 
-    if (!$addUserQrRes) {
+    $stmp = db_get_prepare_stmt($conn, $add_user_query, [$email, $name, $password_hash]);
+    $add_user_query_res = mysqli_stmt_execute($stmp);
+
+    if (!$add_user_query_res) {
         $error = mysqli_error($conn);
         print("Ошибка MySQL: " . $error);
     } else {
@@ -79,14 +73,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($errors) === 0) {
 }
 
 //templating
-$asideContent = include_template('aside.php');
-$mainContent = include_template('registerMain.php', [
-    'asideContent' => $asideContent,
+$aside_content = include_template('aside.php');
+$main_content = include_template('registerMain.php', [
+    'aside_content' => $aside_content,
     'errors' => $errors,
 ]);
 $layout_content = include_template('layout.php', [
-    'pageTitle' => $pageTitle,
-    'mainContent' => $mainContent,
+    'page_title' => $page_title,
+    'main_content' => $main_content,
 ]);
 
 print($layout_content);

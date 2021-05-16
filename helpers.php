@@ -143,8 +143,14 @@ function include_template($name, array $data = []) {
     return $result;
 }
 
-function getPostVal($name) {
-    return $_POST[$name] ?? "";
+
+/**
+ * Достаёт значение поля из массива POST
+ * @param $name - имя поля
+ * @return mixed|string
+ */
+function get_post_val($name) {
+    return htmlspecialchars($_POST[$name] ?? "");
 }
 
 /**
@@ -206,3 +212,48 @@ function dump($data, $title="", $background="#EEEEEE", $color="#000000"){
     echo "</pre>";
 
 }
+
+/**
+ * Устанавливает соединение
+ * @param string $db_name - Имя базы данных
+ * @return false|mixed|mysqli|null
+ */
+function db_connect($db_name) {
+    $conn = mysqli_connect('127.0.0.1', 'mysql', 'mysql', $db_name);
+    if ($conn === false) {
+        print_r('DB connection error' . mysqli_connect_error());
+    }
+    mysqli_set_charset($conn, 'utf8');
+    return $conn;
+}
+
+/**
+ * возвращает списовкасков
+ * @param array $tasks_list
+ * @param int $tasks_category_id
+ * @return int
+ */
+function get_tasks_count(array $tasks_list = [], int $tasks_category_id = 0) {
+    $tasksCount = 0;
+
+    foreach ($tasks_list as $task) {
+        if ($task['category_id'] == $tasks_category_id) {
+            $tasksCount++;
+        }
+    }
+
+    return $tasksCount;
+}
+
+/**
+ * проверяет сессию, редиректит гостей
+ */
+function check_user_session() {
+    if (isset($_SESSION['userid'])) {
+        $user_id = $_SESSION['userid'];
+    } else {
+        header("Location: auth.php");
+        exit;
+    }
+    return $user_id;
+};

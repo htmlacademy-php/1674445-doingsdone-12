@@ -2,7 +2,7 @@
 //    var_dump($errors['name']);
 ?>
 <div class="content">
-    <?php print($asideContent); ?>
+    <?php print($aside_content); ?>
 
     <main class="content__main">
         <h2 class="content__main-heading">Добавление задачи</h2>
@@ -13,7 +13,7 @@
 
                 <input class="form__input <?php if($errors['name']) {
                     print('form__input--error');
-                } ?>" type="text" name="name" id="name" value="<?php print(getPostVal('name')); ?>" placeholder="Введите название">
+                } ?>" type="text" name="name" id="name" value="<?=htmlspecialchars(get_post_val('name')); ?>" placeholder="Введите название">
                 <?php if (isset($errors['name'])): ?>
                     <p class="form__message"><?php print($errors['name']); ?></p>
                 <?php endif ?>
@@ -26,11 +26,11 @@
                     print('form__input--error');
                 } ?>" name="project" id="project">
                     <option value="">Выберите проект</option>
-                    <?php foreach ($tasksCategories as $category): ?>
+                    <?php foreach ($tasks_categories as $category): ?>
                         <option value="<?php print($category['cat_id']);?>"
-                            <?php if($category['cat_id'] == getPostVal('project')) { print('selected'); } ?>
+                            <?php if($category['cat_id'] == get_post_val('project')) { print('selected'); } ?>
                         >
-                            <?php print($category['cat_name']); ?>
+                            <?=htmlspecialchars($category['cat_name']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -44,7 +44,7 @@
 
                 <input class="form__input form__input--date <?php if($errors['date']) {
                     print('form__input--error');
-                } ?>" type="text" name="date" id="date" value="<?php print(getPostVal('date')); ?>" placeholder="Введите дату в формате ГГГГ-ММ-ДД">
+                } ?>" type="text" name="date" id="date" value="<?php print(get_post_val('date')); ?>" placeholder="Введите дату в формате ГГГГ-ММ-ДД">
                 <?php if (isset($errors['date'])): ?>
                     <p class="form__message"><?php print($errors['date']); ?></p>
                 <?php endif ?>
@@ -56,8 +56,7 @@
                 <div class="form__input-file <?php if($errors['file']) {
                     print('form__input--error');
                 } ?>">
-                    <!-- @todo Вопрос что нужно передавать в value? почему не выдает ошибку если $_FILES пустой? -->
-                    <input class="visually-hidden" type="file" name="file" id="file" value="<?php print(getFilesVal('file')['fileName']); ?>">
+                    <input class="visually-hidden" type="file" name="file" id="file" value="<?php print(get_files_value('file')['file_name']); ?>">
 
                     <label class="button button--transparent" for="file">
                         <span>Выберите файл</span>

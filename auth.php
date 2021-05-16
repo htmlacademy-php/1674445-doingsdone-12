@@ -3,20 +3,15 @@ session_start();
 
 require ('helpers.php');
 
-$pageTitle = 'Авторизация';
+$page_title = 'Авторизация';
 $user = [];
 
 //get data
-$conn = mysqli_connect('127.0.0.1', 'mysql', 'mysql', 'doit');
-if ($conn === false) {
-    print('DB connection error' . mysqli_connect_error());
-    exit();
-}
+$conn = db_connect('doingsdone');
 
-mysqli_set_charset($conn, 'utf8');
-$getUsersQr = "SELECT * FROM `users`";
-$getUsersQrRes = mysqli_query($conn, $getUsersQr);
-$usersList = mysqli_fetch_all($getUsersQrRes, MYSQLI_ASSOC);
+$get_users_query = "SELECT * FROM `users`";
+$get_users_query_result = mysqli_query($conn, $get_users_query);
+$usersList = mysqli_fetch_all($get_users_query_result, MYSQLI_ASSOC);
 
 // validation
 $errors = [];
@@ -77,16 +72,16 @@ if (isset($_SESSION['userid'])) {
 
 
 //templating
-$asideContent = include_template('aside.php', [
+$aside_content = include_template('aside.php', [
     'user' => $user,
 ]);
-$mainContent = include_template('authMain.php', [
-    'asideContent' => $asideContent,
+$main_content = include_template('authMain.php', [
+    'aside_content' => $aside_content,
     'errors' => $errors,
 ]);
 $layout_content = include_template('layout.php', [
-    'pageTitle' => $pageTitle,
-    'mainContent' => $mainContent,
+    'page_title' => $page_title,
+    'main_content' => $main_content,
     'user' => $user,
 ]);
 

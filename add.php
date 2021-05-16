@@ -3,98 +3,57 @@ session_start();
 
 require ('helpers.php');
 
-$pageTitle = 'Новый таск';
+$page_title = 'Новый таск';
 
-if (isset($_SESSION['userid'])) {
-    $userId = $_SESSION['userid'];
-} else {
-    header("Location: auth.php"); exit;
-}
+$user_id = check_user_session();
 
 // db queries
-$conn = mysqli_connect('127.0.0.1', 'mysql', 'mysql', 'doit');
-if ($conn === false) {
-    print('DB connection error' . mysqli_connect_error());
-    exit();
-}
+$conn = db_connect('doingsdone');
 
-mysqli_set_charset($conn, 'utf8');
+$get_categories_sql = "SELECT * FROM `categories` WHERE `user_id` = ?";
+$get_categories_stmt = mysqli_prepare($conn, $get_categories_sql);
+mysqli_stmt_bind_param($get_categories_stmt, 'i', $user_id);
+mysqli_stmt_execute($get_categories_stmt);
+$get_categories_result = mysqli_stmt_get_result($get_categories_stmt);
+$tasks_categories = mysqli_fetch_all($get_categories_result, MYSQLI_ASSOC);
 
-$getCategoriesSql = "SELECT * FROM `categories` WHERE `user_id` = ?";
-$getCategoriesStmt = mysqli_prepare($conn, $getCategoriesSql);
-mysqli_stmt_bind_param($getCategoriesStmt, 'i', $userId);
-mysqli_stmt_execute($getCategoriesStmt);
-$getCategoriesRes = mysqli_stmt_get_result($getCategoriesStmt);
-$tasksCategories = mysqli_fetch_all($getCategoriesRes, MYSQLI_ASSOC);
-
-$getTasksSql = "SELECT * FROM `tasks` WHERE `user_id` = ?";
-$getTasksStmt = mysqli_prepare($conn, $getTasksSql);
-mysqli_stmt_bind_param($getTasksStmt, 'i', $userId);
-mysqli_stmt_execute($getTasksStmt);
-$getTasksRes = mysqli_stmt_get_result($getTasksStmt);
-$tasksList = mysqli_fetch_all($getTasksRes, MYSQLI_ASSOC);
+$get_tasks_sql = "SELECT * FROM `tasks` WHERE `user_id` = ?";
+$get_task_stmt = mysqli_prepare($conn, $get_tasks_sql);
+mysqli_stmt_bind_param($get_task_stmt, 'i', $user_id);
+mysqli_stmt_execute($get_task_stmt);
+$get_tasks_res = mysqli_stmt_get_result($get_task_stmt);
+$tasks_list = mysqli_fetch_all($get_tasks_res, MYSQLI_ASSOC);
 // db queries end
-
-function getTacksCount(array $tasksList = [], int $taskCategoryId = 0) {
-    $tasksCount = 0;
-
-    foreach ($tasksList as $task) {
-        if ($task['category_id'] == $taskCategoryId) {
-            $tasksCount++;
-        }
-    }
-
-    return $tasksCount;
-}
 
 // обработка формы
 if (isset($_FILES['file'])) {
-    $fileName = $_FILES['file']['name'];
-    $uploadPath = __DIR__ . '/uploads/';
-    $fileUrl = '/uploads/' . $fileName;
-    move_uploaded_file($_FILES['file']['tmp_name'], $uploadPath . $fileName);
+    $file_name = $_FILES['file']['name'];
+    $upload_path = __DIR__ . '/uploads/';
+    $file_url = '/uploads/' . $file_name;
+    move_uploaded_file($_FILES['file']['tmp_name'], $upload_path . $file_name);
 }
 
-function getFilesVal($name) {
+function get_files_value($name) {
     if (isset($_FILES[$name])) {
-        $fileName = $_FILES[$name]['name'];
-        $fileUrl = '/uploads/' . $fileName;
-        return compact('fileName', 'fileUrl');
+        $file_name = $_FILES[$name]['name'];
+        $file_url = '/uploads/' . $file_name;
+        return compact('file_name', 'file_url');
     }
-    // @todo вопрос: нужен ли тут return?
 }
 
-function validateFilled($name) {
+function validate_filled($name) {
     if (empty($_POST[$name])) {
         return "Это поле должно быть заполнено";
     }
 }
 
-function validateEmail($name) {
-    if (!filter_input(INPUT_POST, $name, FILTER_VALIDATE_EMAIL)) {
-        return "Введите корректный email";
-    }
-}
-
-// @todo вопрос: Для идентификатора выбранного проекта проверять, что он ссылается на реально существующий проект.
-//function validateCategory() {
-//    foreach ($tasksCategories as $value) {
-//        if ($value['cat_id'] == $_POST['project']) {
-//            return true;
-//        }
-//    }
-//    return 'Выберите проект';
-//}
-
 $errors = [];
 $rules = [
     'name' => function() {
-        return validateFilled('name');
+        return validate_filled('name');
     },
     'project' => function() {
-        // не понял как ошибку поправить. видимо что-то с областью видимости
-        // return validateCategory();
-        return validateFilled('project');
+        return validate_filled('project');
     },
     'date' => function() {
         if (!is_date_valid($_POST['date'])) {
@@ -102,22 +61,20 @@ $rules = [
         }
 
         $taskExpireDate = date_create_from_format('Y-m-d', $_POST['date']);
-        $currDate = date_create('now');
+        $curr_date = date_create('now');
 
-        if ($taskExpireDate < $currDate) {
+        if ($taskExpireDate < $curr_date) {
             return 'Выберите корректную дату';
         }
     },
     'file' => function() {
         if (isset($_FILES['file'])) {
-            if ($_FILES['file']['size'] > 200000) {
-                return "Максимальный размер файла: 200Кб";
+            if ($_FILES['file']['size'] > 2000000) {
+                return "Максимальный размер файла: 2000Кб";
             }
         }
-    },
+    }
 ];
-
-//var_dump( strtotime('2012-03-25') );
 
 foreach ($_POST as $key => $value) {
     if (isset($rules[$key])) {
@@ -137,25 +94,21 @@ $errors = array_filter($errors);
 
 // отправка запросов
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($errors) === 0) {
-    $currDate = date_format(date_create('now'), 'Y-m-d');
-    $addTaskQr = "INSERT INTO `tasks` (publish_date, status, name, file_url, expire_date, user_id, category_id)
+    $curr_date = date_format(date_create('now'), 'Y-m-d');
+    $add_task_query = "INSERT INTO `tasks` (publish_date, status, name, file_url, expire_date, user_id, category_id)
                   VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-    $stmp = mysqli_prepare($conn, $addTaskQr);
-
-    $name = getPostVal('name');
-    $date = getPostVal('date');
-    $project = getPostVal('project');
+    $name = get_post_val('name');
+    $date = get_post_val('date');
+    $project = get_post_val('project');
     $status = 0;
-    $userId = 5;
-    $fileUrl = getFilesVal('file')['fileUrl'];
+    $file_url = get_files_value('file')['file_url'];
 
-    mysqli_stmt_bind_param($stmp, 'sisssii',
-        $currDate, $status, $name, $fileUrl, $date, $userId, $project);
 
-    $addTaskQrResult = mysqli_stmt_execute($stmp);
+    $stmp = db_get_prepare_stmt($conn, $add_task_query, [$curr_date, $status, $name, $file_url, $date, $user_id, $project]);
+    $add_task_queryResult = mysqli_stmt_execute($stmp);
 
-    if (!$addTaskQrResult) {
+    if (!$add_task_queryResult) {
         $error = mysqli_error($conn);
         print("Ошибка MySQL: " . $error);
     } else {
@@ -164,21 +117,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($errors) === 0) {
 }
 
 // шаблонизация
-$asideContent = include_template('aside.php', [
-    'tasksCategories' => $tasksCategories,
-    'tasksList' => $tasksList,
+$aside_content = include_template('aside.php', [
+    'tasks_categories' => $tasks_categories,
+    'tasks_list' => $tasks_list,
 ]);
 
-$mainContent = include_template('addTaskMain.php', [
-    'tasksCategories' => $tasksCategories,
-    'tasksList' => $tasksList,
-    'asideContent' => $asideContent,
+$main_content = include_template('addTaskMain.php', [
+    'tasks_categories' => $tasks_categories,
+    'tasks_list' => $tasks_list,
+    'aside_content' => $aside_content,
     'errors' => $errors,
 ]);
 
 $layout_content = include_template('layout.php', [
-    'pageTitle' => $pageTitle,
-    'mainContent' => $mainContent,
+    'page_title' => $page_title,
+    'main_content' => $main_content,
 ]);
 
 print($layout_content);

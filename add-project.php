@@ -3,90 +3,36 @@ session_start();
 
 require ('helpers.php');
 
-$pageTitle = 'Новый таск';
+$page_title = 'Новый таск';
 
-if (isset($_SESSION['userid'])) {
-    $userId = $_SESSION['userid'];
-} else {
-    header("Location: auth.php"); exit;
-}
+$user_id = check_user_session();
 
 // db queries
-$conn = mysqli_connect('127.0.0.1', 'mysql', 'mysql', 'doit');
-if ($conn === false) {
-    print('DB connection error' . mysqli_connect_error());
-    exit();
-}
+$conn = db_connect('doingsdone');
 
-mysqli_set_charset($conn, 'utf8');
+$get_categories_sql = "SELECT * FROM `categories` WHERE `user_id` = ?";
+$get_categories_stmt = mysqli_prepare($conn, $get_categories_sql);
+mysqli_stmt_bind_param($get_categories_stmt, 'i', $user_id);
+mysqli_stmt_execute($get_categories_stmt);
+$get_categories_result = mysqli_stmt_get_result($get_categories_stmt);
+$tasks_categories = mysqli_fetch_all($get_categories_result, MYSQLI_ASSOC);
 
-$getCategoriesSql = "SELECT * FROM `categories` WHERE `user_id` = ?";
-$getCategoriesStmt = mysqli_prepare($conn, $getCategoriesSql);
-mysqli_stmt_bind_param($getCategoriesStmt, 'i', $userId);
-mysqli_stmt_execute($getCategoriesStmt);
-$getCategoriesRes = mysqli_stmt_get_result($getCategoriesStmt);
-$tasksCategories = mysqli_fetch_all($getCategoriesRes, MYSQLI_ASSOC);
-
-$getTasksSql = "SELECT * FROM `tasks` WHERE `user_id` = ?";
-$getTasksStmt = mysqli_prepare($conn, $getTasksSql);
-mysqli_stmt_bind_param($getTasksStmt, 'i', $userId);
-mysqli_stmt_execute($getTasksStmt);
-$getTasksRes = mysqli_stmt_get_result($getTasksStmt);
-$tasksList = mysqli_fetch_all($getTasksRes, MYSQLI_ASSOC);
+$get_tasks_sql = "SELECT * FROM `tasks` WHERE `user_id` = ?";
+$get_task_stmt = mysqli_prepare($conn, $get_tasks_sql);
+mysqli_stmt_bind_param($get_task_stmt, 'i', $user_id);
+mysqli_stmt_execute($get_task_stmt);
+$get_tasks_res = mysqli_stmt_get_result($get_task_stmt);
+$tasks_list = mysqli_fetch_all($get_tasks_res, MYSQLI_ASSOC);
 // db queries end
 
-function getTacksCount(array $tasksList = [], int $taskCategoryId = 0) {
-    $tasksCount = 0;
-
-    foreach ($tasksList as $task) {
-        if ($task['category_id'] == $taskCategoryId) {
-            $tasksCount++;
-        }
-    }
-
-    return $tasksCount;
-}
-
 // обработка формы
-if (isset($_FILES['file'])) {
-    $fileName = $_FILES['file']['name'];
-    $uploadPath = __DIR__ . '/uploads/';
-    $fileUrl = '/uploads/' . $fileName;
-    move_uploaded_file($_FILES['file']['tmp_name'], $uploadPath . $fileName);
-}
-
-function getFilesVal($name) {
-    if (isset($_FILES[$name])) {
-        $fileName = $_FILES[$name]['name'];
-        $fileUrl = '/uploads/' . $fileName;
-        return compact('fileName', 'fileUrl');
-    }
-    // @todo вопрос: нужен ли тут return?
-}
-
-function validateFilled($name) {
-    if (empty($_POST[$name])) {
-        return "Это поле должно быть заполнено";
-    }
-}
-
-function validateEmail($name) {
-    if (!filter_input(INPUT_POST, $name, FILTER_VALIDATE_EMAIL)) {
-        return "Введите корректный email";
-    }
-}
-
-// @todo вопрос: Для идентификатора выбранного проекта проверять, что он ссылается на реально существующий проект.
-//function validateCategory() {
-//    foreach ($tasksCategories as $value) {
-//        if ($value['cat_id'] == $_POST['project']) {
-//            return true;
-//        }
-//    }
-//    return 'Выберите проект';
-//}
 
 $errors = [];
+foreach ($tasks_categories as $category) {
+    if ($category['cat_name'] == get_post_val('name')) {
+        $errors['name'] = 'Название проекта занято';
+    }
+}
 foreach ($_POST as $key => $value) {
     if ($key == 'name') {
         $len = strlen($_POST[$key]);
@@ -100,43 +46,34 @@ $errors = array_filter($errors);
 
 // отправка запросов
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($errors) === 0) {
-    $addTaskQr = "INSERT INTO `categories` (cat_name, user_id)
+    $add_category_query = "INSERT INTO `categories` (cat_name, user_id)
                   VALUES (?, ?)";
+    $name = get_post_val('name');
+    $stmp = db_get_prepare_stmt($conn, $add_category_query, [$name, $user_id]);
+    $add_category_query_result = mysqli_stmt_execute($stmp);
 
-    $stmp = mysqli_prepare($conn, $addTaskQr);
-
-    $name = getPostVal('name');
-    $userId = $userId;
-
-    mysqli_stmt_bind_param($stmp, 'si',
-        $name, $userId);
-
-    $addTaskQrResult = mysqli_stmt_execute($stmp);
-
-    if (!$addTaskQrResult) {
+    if (!$add_category_query_result) {
         $error = mysqli_error($conn);
         print("Ошибка MySQL: " . $error);
-    } else {
-        print ('project added');
     }
 }
 
 // шаблонизация
-$asideContent = include_template('aside.php', [
-    'tasksCategories' => $tasksCategories,
-    'tasksList' => $tasksList,
+$aside_content = include_template('aside.php', [
+    'tasks_categories' => $tasks_categories,
+    'tasks_list' => $tasks_list,
 ]);
 
-$mainContent = include_template('addProject.php', [
-    'tasksCategories' => $tasksCategories,
-    'tasksList' => $tasksList,
-    'asideContent' => $asideContent,
+$main_content = include_template('addProject.php', [
+    'tasks_categories' => $tasks_categories,
+    'tasks_list' => $tasks_list,
+    'aside_content' => $aside_content,
     'errors' => $errors,
 ]);
 
 $layout_content = include_template('layout.php', [
-    'pageTitle' => $pageTitle,
-    'mainContent' => $mainContent,
+    'page_title' => $page_title,
+    'main_content' => $main_content,
 ]);
 
 print($layout_content);

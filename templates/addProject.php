@@ -2,7 +2,7 @@
 //    var_dump($errors['name']);
 ?>
 <div class="content">
-    <?php print($asideContent); ?>
+    <?php print($aside_content); ?>
 
     <main class="content__main">
         <h2 class="content__main-heading">Добавление проекта</h2>
@@ -13,7 +13,7 @@
 
                 <input class="form__input <?php if($errors['name']) {
                     print('form__input--error');
-                } ?>" type="text" name="name" id="name" value="<?php print(getPostVal('name')); ?>" placeholder="Введите название">
+                } ?>" type="text" name="name" id="name" value="<?=htmlspecialchars(get_post_val('name')); ?>" placeholder="Введите название">
                 <?php if (isset($errors['name'])): ?>
                     <p class="form__message"><?php print($errors['name']); ?></p>
                 <?php endif ?>

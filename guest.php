@@ -3,41 +3,39 @@
 
 <head>
     <meta charset="UTF-8">
-    <title><?php print($page_title . ' | Дела в порядке');?></title>
+    <title>Document</title>
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/flatpickr.min.css">
 </head>
 
-<body>
+<body class="body-background">
 <h1 class="visually-hidden">Дела в порядке</h1>
 
 <div class="page-wrapper">
-    <div class="container container--with-sidebar">
+    <div class="container">
         <header class="main-header">
             <a href="/">
-                <img src="img/logo.png" width="153" height="42" alt="Логотип Дела в порядке">
+                <img src="img/logo.png" width="153" height="42" alt="Логитип Дела в порядке">
             </a>
 
             <div class="main-header__side">
-                <?php if (isset($_SESSION['username'])): ?>
-                    <a class="main-header__side-item button button--plus open-modal" href="add.php">Добавить
-                        задачу</a>
-
-                    <div class="main-header__side-item user-menu">
-                        <div class="user-menu__data">
-                            <p><?php print ($_SESSION['username'] ?? 'test');?></p>
-
-                            <a href="/logout.php">Выйти</a>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <a class="main-header__side-item button button--transparent" href="/auth.php">Войти</a>
-                <?php endif; ?>
+                <a class="main-header__side-item button button--transparent" href="auth.php">Войти</a>
             </div>
         </header>
 
-        <?php print($main_content); ?>
+        <div class="content">
+            <section class="welcome">
+                <h2 class="welcome__heading">«Дела в порядке»</h2>
+
+                <div class="welcome__text">
+                    <p>«Дела в порядке» — это веб приложение для удобного ведения списка дел. Сервис помогает пользователям не забывать о предстоящих важных событиях и задачах.</p>
+
+                    <p>После создания аккаунта, пользователь может начать вносить свои дела, деля их по проектам и указывая сроки.</p>
+                </div>
+
+                <a class="welcome__button button" href="register.php">Зарегистрироваться</a>
+            </section>
+        </div>
     </div>
 </div>
 
@@ -48,8 +46,6 @@
 
             <p>Веб-приложение для удобного ведения списка дел.</p>
         </div>
-
-        <a class="main-footer__button button button--plus" href="add.php">Добавить задачу</a>
 
         <div class="main-footer__social social">
             <span class="visually-hidden">Мы в соцсетях:</span>
@@ -100,7 +96,5 @@
     </div>
 </footer>
 
-<script src="flatpickr.js"></script>
-<script src="script.js"></script>
 </body>
 </html>
